@@ -119,6 +119,7 @@ class Corpus:
                 nlp = _resolve_spacy_model(lang_to_model(lang), auto_download)
             else:
                 raise ValueError("Provide lang=, model=, or nlp=.")
+        self.nlp = nlp
 
         # Resolve lang for stopwords
         resolved_lang = lang
