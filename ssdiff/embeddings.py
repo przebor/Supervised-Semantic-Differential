@@ -628,6 +628,7 @@ class Embeddings:
         vector: np.ndarray,
         topn: int = 10,
         restrict_vocab: int | None = None,
+        vocab_idx: list[int] | None = None,
     ) -> list[tuple[str, float]]:
         """Return (word, cosine) pairs, most similar first.
 
@@ -676,6 +677,9 @@ class Embeddings:
                 restrict_vocab = cap
 
         vecs = self.vectors
+        if vocab_idx is not None:
+            vecs = vecs[vocab_idx]
+        
         if restrict_vocab is not None:
             vecs = vecs[:restrict_vocab]
         if len(vecs) == 0:

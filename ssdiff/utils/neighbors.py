@@ -7,6 +7,7 @@ from typing import Literal
 import numpy as np
 
 from ssdiff.lang_config import get_config
+from ssdiff.utils.text import build_docs_from_preprocessed, preprocess_texts
 
 from .math import kmeans, kmeans_auto_k, unit_vector
 
@@ -18,6 +19,7 @@ def filtered_neighbors(
     cand: int = 2000,
     restrict: int = 10000,
     lang: str = "pl",
+    vocab_idx: list[int] | None = None
 ) -> list[tuple[str, float]]:
     """Return top cosine neighbors, filtering out numbers and capitalized tokens.
 
@@ -50,7 +52,7 @@ def filtered_neighbors(
         descending similarity.
     """
     bad_token = get_config(lang).bad_token_re
-    nbrs = embeddings.similar_by_vector(vec, topn=cand, restrict_vocab=restrict)
+    nbrs = embeddings.similar_by_vector(vec, topn=cand, restrict_vocab=restrict, vocab_idx=vocab_idx)
     out = []
     for w, sim in nbrs:
         if not bad_token.match(w):
@@ -73,6 +75,7 @@ def cluster_top_neighbors(
     min_cluster_size: int = 2,
     side: Literal["pos", "neg"] = "pos",
     lang: str = "pl",
+    nlp = None,
 ) -> list[dict]:
     """Cluster the top vocabulary neighbors of +/-beta into interpretable themes.
 
@@ -125,7 +128,14 @@ def cluster_top_neighbors(
     bu = unit_vector(beta)
     vec = bu if side == "pos" else -bu
 
-    pairs = filtered_neighbors(embeddings, vec, topn=topn, restrict=restrict_vocab, lang=lang)
+    # Quite sketchy actually
+    # TODO: Make this less hacky
+    pre_keys = preprocess_texts(embeddings.index_to_key, nlp=nlp, stopwords=[])
+    key_docs = build_docs_from_preprocessed(pre_keys)
+    keys = ["".join(doc) for doc in key_docs]
+    vocab_idx = [embeddings.key_to_index[k] for k in keys if k in embeddings.key_to_index]
+
+    pairs = filtered_neighbors(embeddings, vec, topn=topn, restrict=restrict_vocab, lang=lang, vocab_idx=vocab_idx)
     words = [w for (w, _s) in pairs]
     if len(words) < max(2, k_min):
         raise ValueError("Not enough neighbors to cluster.")
