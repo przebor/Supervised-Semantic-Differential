@@ -128,12 +128,15 @@ def cluster_top_neighbors(
     bu = unit_vector(beta)
     vec = bu if side == "pos" else -bu
 
+    vocab_idx = None
+
     # Quite sketchy actually
     # TODO: Make this less hacky
-    pre_keys = preprocess_texts(embeddings.index_to_key, nlp=nlp, stopwords=[])
-    key_docs = build_docs_from_preprocessed(pre_keys)
-    keys = ["".join(doc) for doc in key_docs]
-    vocab_idx = [embeddings.key_to_index[k] for k in keys if k in embeddings.key_to_index]
+    if nlp is not None:
+        pre_keys = preprocess_texts(embeddings.index_to_key, nlp=nlp, stopwords=[])
+        key_docs = build_docs_from_preprocessed(pre_keys)
+        keys = ["".join(doc) for doc in key_docs]
+        vocab_idx = [embeddings.key_to_index[k] for k in keys if k in embeddings.key_to_index]
 
     pairs = filtered_neighbors(embeddings, vec, topn=topn, restrict=restrict_vocab, lang=lang, vocab_idx=vocab_idx)
     words = [w for (w, _s) in pairs]
