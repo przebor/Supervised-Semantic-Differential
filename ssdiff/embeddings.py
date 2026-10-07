@@ -677,6 +677,7 @@ class Embeddings:
                 restrict_vocab = cap
 
         vecs = self.vectors
+        vocab_idx = vocab_idx[vocab_idx < len(vecs)] if vocab_idx is not None else None
         if vocab_idx is not None:
             vecs = vecs[vocab_idx]
         
